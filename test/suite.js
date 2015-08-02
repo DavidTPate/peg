@@ -1,0 +1,426 @@
+(function (helper, nock, Peg) {
+    var expect = helper.expect;
+    describe('Suites', function () {
+        it('should be able to specify only a before with a test', function () {
+            var beforeEndpoint = nock('https://example.com')
+                .get('/before')
+                .reply(200);
+
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    before: [
+                        {
+                            target: {
+                                url: 'https://example.com/before',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(beforeEndpoint.isDone()).to.be.ok();
+                expect(testEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to specify only an after with a test', function () {
+            var afterEndpoint = nock('https://example.com')
+                .get('/after')
+                .reply(200);
+
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    after: [
+                        {
+                            target: {
+                                url: 'https://example.com/after',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(afterEndpoint.isDone()).to.be.ok();
+                expect(testEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to specify only a beforeEach with a test', function () {
+            var beforeEachEndpoint = nock('https://example.com')
+                .get('/beforeEach')
+                .reply(200);
+
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    beforeEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/beforeEach',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(beforeEachEndpoint.isDone()).to.be.ok();
+                expect(testEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to specify only an afterEach with a test', function () {
+            var afterEachEndpoint = nock('https://example.com')
+                .get('/afterEach')
+                .reply(200);
+
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    afterEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/afterEach',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(afterEachEndpoint.isDone()).to.be.ok();
+                expect(testEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to specify a before, after, beforeEach, and afterEach', function () {
+            var beforeEndpoint = nock('https://example.com')
+                .get('/before')
+                .reply(200);
+
+            var afterEndpoint = nock('https://example.com')
+                .get('/after')
+                .reply(200);
+
+            var beforeEachEndpoint = nock('https://example.com')
+                .get('/beforeEach')
+                .twice()
+                .reply(200);
+
+            var afterEachEndpoint = nock('https://example.com')
+                .get('/afterEach')
+                .twice()
+                .reply(200);
+
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .twice()
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    before: [
+                        {
+                            target: {
+                                url: 'https://example.com/before',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    beforeEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/beforeEach',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    after: [
+                        {
+                            target: {
+                                url: 'https://example.com/after',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    afterEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/afterEach',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(beforeEndpoint.isDone()).to.be.ok();
+                expect(afterEndpoint.isDone()).to.be.ok();
+                expect(beforeEachEndpoint.isDone()).to.be.ok();
+                expect(afterEachEndpoint.isDone()).to.be.ok();
+                expect(testEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to multiple specify a before, after, beforeEach, and afterEach', function () {
+            var beforeFirstEndpoint = nock('https://example.com')
+                .get('/before1')
+                .reply(200);
+
+            var afterFirstEndpoint = nock('https://example.com')
+                .get('/after1')
+                .reply(200);
+
+            var beforeEachFirstEndpoint = nock('https://example.com')
+                .get('/beforeEach1')
+                .twice()
+                .reply(200);
+
+            var afterEachFirstEndpoint = nock('https://example.com')
+                .get('/afterEach1')
+                .twice()
+                .reply(200);
+
+            var testFirstEndpoint = nock('https://example.com')
+                .get('/test1')
+                .reply(200);
+
+            var beforeSecondEndpoint = nock('https://example.com')
+                .get('/before2')
+                .reply(200);
+
+            var afterSecondEndpoint = nock('https://example.com')
+                .get('/after2')
+                .reply(200);
+
+            var beforeEachSecondEndpoint = nock('https://example.com')
+                .get('/beforeEach2')
+                .twice()
+                .reply(200);
+
+            var afterEachSecondEndpoint = nock('https://example.com')
+                .get('/afterEach2')
+                .twice()
+                .reply(200);
+
+            var testSecondEndpoint = nock('https://example.com')
+                .get('/test2')
+                .reply(200);
+
+            return expect(Peg({
+                suite: {
+                    before: [
+                        {
+                            target: {
+                                url: 'https://example.com/before1',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/before2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    beforeEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/beforeEach1',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/beforeEach2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    after: [
+                        {
+                            target: {
+                                url: 'https://example.com/after1',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/after2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    afterEach: [
+                        {
+                            target: {
+                                url: 'https://example.com/afterEach1',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/afterEach2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ],
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test1',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/test2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(beforeFirstEndpoint.isDone()).to.be.ok();
+                expect(beforeSecondEndpoint.isDone()).to.be.ok();
+                expect(afterFirstEndpoint.isDone()).to.be.ok();
+                expect(afterSecondEndpoint.isDone()).to.be.ok();
+                expect(beforeEachFirstEndpoint.isDone()).to.be.ok();
+                expect(beforeEachSecondEndpoint.isDone()).to.be.ok();
+                expect(afterEachFirstEndpoint.isDone()).to.be.ok();
+                expect(afterEachSecondEndpoint.isDone()).to.be.ok();
+                expect(testFirstEndpoint.isDone()).to.be.ok();
+                expect(testSecondEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+    });
+}(require('./helper'), require('nock'), require('../index')));

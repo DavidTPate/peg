@@ -11,7 +11,7 @@
         flags: Joi.object().keys({
             ignoreCase: Joi.boolean().optional(),
             global: Joi.boolean().optional(),
-            mutliline: Joi.boolean().optional()
+            multiline: Joi.boolean().optional()
         }).unknown().optional()
     }).unknown().required();
     var testValueSchema = Joi.alternatives().try(Joi.string().required(), regexValueSchema);
@@ -149,6 +149,10 @@
                             validateTestValue(response.headers[lcaseHeader], test.expect.headers[header], util.format('header "%s"', header));
                         });
                     }
+
+                    if (test.expect.body) {
+                        validateTestValue(response.body, test.expect.body, 'body');
+                    }
                 }
 
                 return Promise.resolve();
@@ -173,6 +177,8 @@
             var regex = new RegExp(expected.expression, flags);
             assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
         }
+
+        throw new Error('Invalid config');
     }
 
     module.exports = handleSuites;

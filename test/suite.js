@@ -261,6 +261,111 @@
             })).to.eventually.be.fulfilled();
         });
 
+        it('should execute tests in serial by default', function () {
+            var firstTestEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            var secondTestEndpoint = nock('https://example.com')
+                .get('/test2')
+                .reply(200, function(uri, requestBody, cb) {
+                    if (!firstTestEndpoint.isDone()) {
+                        return cb(new Error('Expected first to be hit...uh...first'));
+                    }
+                    cb(null, '');
+                });
+
+            var thirdTestEndpoint = nock('https://example.com')
+                .get('/test3')
+                .reply(200, function(uri, requestBody, cb) {
+                    if (!firstTestEndpoint.isDone()) {
+                        return cb(new Error('Expected second to be hit second'));
+                    }
+                    cb(null, '');
+                });
+
+            return expect(Peg({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/test2',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/test3',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(firstTestEndpoint.isDone()).to.be.ok();
+                expect(secondTestEndpoint.isDone()).to.be.ok();
+                expect(thirdTestEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should be able to execute tests in parallel', function () {
+            // TODO: The fact that these run in parallel can be validated visually, but programatically I haven't figured out a good way yet.
+            var testEndpoint = nock('https://example.com')
+                .get('/test')
+                .reply(200);
+
+            var delayedTestEndpoint = nock('https://example.com')
+                .get('/delayedTest')
+                .delayConnection(250)
+                .reply(200);
+
+            return expect(Peg({
+                options: {
+                    runInParallel: true
+                },
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com/delayedTest',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/test',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(testEndpoint.isDone()).to.be.ok();
+                expect(delayedTestEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
         it('should be able to multiple specify a before, after, beforeEach, and afterEach', function () {
             var beforeFirstEndpoint = nock('https://example.com')
                 .get('/before1')

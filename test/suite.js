@@ -168,22 +168,27 @@
 
             var afterEndpoint = nock('https://example.com')
                 .get('/after')
-                .reply(200);
+                .reply(200, function(uri, requestBody, cb) {
+                    cb(afterEachEndpoint.isDone() ? null : new Error('Expected afterEach to be called before after'));
+                });
 
             var beforeEachEndpoint = nock('https://example.com')
                 .get('/beforeEach')
-                .twice()
-                .reply(200);
+                .reply(200, function(uri, requestBody, cb) {
+                    cb(beforeEndpoint.isDone() ? null : new Error('Expected before to be called before beforeEach'));
+                });
 
             var afterEachEndpoint = nock('https://example.com')
                 .get('/afterEach')
-                .twice()
-                .reply(200);
+                .reply(200, function(uri, requestBody, cb) {
+                    cb(testEndpoint.isDone() ? null : new Error('Expected tests to be called before afterEach'));
+                });
 
             var testEndpoint = nock('https://example.com')
                 .get('/test')
-                .twice()
-                .reply(200);
+                .reply(200, function(uri, requestBody, cb) {
+                    cb(beforeEachEndpoint.isDone() ? null : new Error('Expected beforeEach to be called before tests'));
+                });
 
             return expect(Peg({
                 suite: {
@@ -232,15 +237,6 @@
                         }
                     ],
                     tests: [
-                        {
-                            target: {
-                                url: 'https://example.com/test',
-                                method: 'GET'
-                            },
-                            expect: {
-                                statusCode: 200
-                            }
-                        },
                         {
                             target: {
                                 url: 'https://example.com/test',
@@ -366,7 +362,7 @@
             })).to.eventually.be.fulfilled();
         });
 
-        it('should be able to multiple specify a before, after, beforeEach, and afterEach', function () {
+        it('should be able to specify multiple a before, after, beforeEach, and afterEach', function () {
             var beforeFirstEndpoint = nock('https://example.com')
                 .get('/before1')
                 .reply(200);

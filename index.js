@@ -32,7 +32,7 @@
         }).unknown()
     }).unknown().required()).single(true);
 
-    var eventSchema = Joi.object().keys({
+    var suitesSchema = Joi.object().keys({
         options: Joi.object().keys({
             followRedirects: Joi.boolean().default(false).optional(),
             persistCookies: Joi.boolean().default(false).optional(),
@@ -47,9 +47,9 @@
         }).unknown().required()
     }).unknown().required();
 
-    function handleSuites(event) {
+    function handleSuites(suites) {
         return new Promise(function (resolve, reject) {
-            var result = Joi.validate(event, eventSchema, {stripUnknown: true});
+            var result = Joi.validate(suites, suitesSchema, {stripUnknown: true});
 
             if (result.error) {
                 return reject(result.error);
@@ -177,8 +177,6 @@
             var regex = new RegExp(expected.expression, flags);
             assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
         }
-
-        throw new Error('Invalid config');
     }
 
     module.exports = handleSuites;

@@ -10,7 +10,7 @@
                 .get('/test')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     before: [
                         {
@@ -50,7 +50,7 @@
                 .get('/test')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     after: [
                         {
@@ -90,7 +90,7 @@
                 .get('/test')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     beforeEach: [
                         {
@@ -130,7 +130,7 @@
                 .get('/test')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     afterEach: [
                         {
@@ -190,7 +190,7 @@
                     cb(beforeEachEndpoint.isDone() ? null : new Error('Expected beforeEach to be called before tests'));
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     before: [
                         {
@@ -280,7 +280,7 @@
                     cb(null, '');
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -330,7 +330,7 @@
                 .delayConnection(250)
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 options: {
                     runInParallel: true
                 },
@@ -407,7 +407,7 @@
                 .get('/test2')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     before: [
                         {

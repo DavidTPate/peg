@@ -18,8 +18,12 @@
   "homepage": "https://github.com/DavidTPate/peg#readme",
   "dependencies": {
     "bluebird": "^2.x",
+    "commander": "^2.8.1",
+    "exit": "^0.1.2",
     "joi": "^6.x",
+    "lodash.create": "^3.1.1",
     "request-promise": "^0.x",
+    "supports-color": "^3.1.0",
     "tough-cookie": "^2.x"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-(function (request, util, assert, Joi, Promise) {
+(function (request, util, assert, Joi, Promise, create, EventEmitter) {
     var methods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
     var statusCodes = [100, 101, 102, 200, 201, 202, 203, 204, 205, 206, 207, 300,
@@ -17,6 +17,7 @@
     var testValueSchema = Joi.alternatives().try(Joi.string().required(), regexValueSchema);
 
     var testSchema = Joi.array().items(Joi.object().keys({
+        title: Joi.string().optional(),
         target: Joi.object().keys({
             url: Joi.string().uri({
                 scheme: ['http', 'https']
@@ -39,6 +40,7 @@
             runInParallel: Joi.boolean().default(false).optional()
         }).unknown().optional(),
         suite: Joi.object().keys({
+            title: Joi.string().optional(),
             before: testSchema.optional(),
             beforeEach: testSchema.optional(),
             after: testSchema.optional(),
@@ -47,84 +49,135 @@
         }).unknown().required()
     }).unknown().required();
 
-    function handleSuites(suites) {
-        return new Promise(function (resolve, reject) {
-            var result = Joi.validate(suites, suitesSchema, {stripUnknown: true});
-
-            if (result.error) {
-                return reject(result.error);
-            }
-
-            var suite = result.value.suite;
-            var suiteOptions = result.value.options;
-
-            // For now, don't want to add the ability to nest suites, as I feel that would encourage test suites to be larger than I prefer. I think they should be small and simple, but it would allow for over-nesting and large test suites instead of focusing on small bits of functionality.
-            resolve(executeSuite(suite, suiteOptions));
-        });
+    function SuiteRunner() {
     }
 
-    function executeSuite(suite, options) {
+    SuiteRunner.prototype = create(EventEmitter.prototype, {
+        constructor: SuiteRunner
+    });
+
+    SuiteRunner.prototype.run = function runSuites(suites) {
+        if (!suites) {
+            return Promise.reject(new Error('Suites must either be an Array of suites or a single suite'));
+        }
+
+        if (!Array.isArray(suites)) {
+            suites = [suites];
+        }
+
+        var self = this;
+        self.emit('start', suites);
+        return Promise.each(suites, function (suite) {
+            return new Promise(function (resolve, reject) {
+                var result = Joi.validate(suite, suitesSchema, {stripUnknown: true});
+
+                if (result.error) {
+                    return reject(result.error);
+                }
+
+                var validatedSuite = result.value.suite;
+                var suiteOptions = result.value.options;
+
+                // For now, don't want to add the ability to nest suites, as I feel that would encourage test suites to be larger than I prefer. I think they should be small and simple, but it would allow for over-nesting and large test suites instead of focusing on small bits of functionality.
+                return resolve(self.executeSuite(validatedSuite, suiteOptions));
+            });
+        }).finally(function() {
+            self.emit('end', suites);
+        });
+    };
+
+    SuiteRunner.prototype.executeSuite = function executeSuite(suite, options) {
+        var self = this;
+        suite.title = suite.title || 'Suite';
+        self.emit('suite', suite);
         options = options || {};
         var suiteCompletePromise;
         if (suite.before) {
-            suiteCompletePromise = executeTestsSerial(suite.before);
+            self.emit('before', suite.before);
+            suiteCompletePromise = self.executeTestsSerial(suite.before).then(function () {
+                self.emit('before end', suite.before);
+            });
         } else {
             suiteCompletePromise = Promise.resolve();
         }
 
         suiteCompletePromise = suiteCompletePromise.then(function () {
             if (options.runInParallel) {
-                return executeTestsParallel(suite.tests, suite.beforeEach, suite.afterEach);
+                return self.executeTestsParallel(suite.tests, suite.beforeEach, suite.afterEach);
             }
-            return executeTestsSerial(suite.tests, suite.beforeEach, suite.afterEach);
+            return self.executeTestsSerial(suite.tests, suite.beforeEach, suite.afterEach);
         });
 
         if (suite.after) {
             suiteCompletePromise = suiteCompletePromise.then(function () {
-                return executeTestsSerial(suite.after);
+                self.emit('after', suite.after);
+                return self.executeTestsSerial(suite.after).then(function () {
+                    self.emit('after end', suite.after);
+                });
             });
         }
 
-        return suiteCompletePromise;
-    }
+        return suiteCompletePromise.then(function () {
+            self.emit('suite end', suite);
+        });
+    };
 
-    function executeTestsSerial(tests, beforeEach, afterEach) {
+    SuiteRunner.prototype.executeTestsSerial = function executeTestsSerial(tests, beforeEach, afterEach) {
+        var self = this;
         var testsCompletePromise = Promise.resolve();
         tests.forEach(function (test) {
             testsCompletePromise = testsCompletePromise.then(function () {
-                return executeTest(test, beforeEach, afterEach);
+                return self.executeTest(test, beforeEach, afterEach);
             });
         });
         return testsCompletePromise;
-    }
+    };
 
-    function executeTestsParallel(tests, beforeEach, afterEach) {
+    SuiteRunner.prototype.executeTestsParallel = function executeTestsParallel(tests, beforeEach, afterEach) {
+        var self = this;
         return Promise.all(tests.map(function (test) {
-            return executeTest(test, beforeEach, afterEach);
+            return self.executeTest(test, beforeEach, afterEach);
         }));
-    }
+    };
 
-    function executeTest(test, beforeEach, afterEach) {
+    SuiteRunner.prototype.executeTest = function executeTest(test, beforeEach, afterEach) {
+        var self = this;
         var testCompletePromise;
 
         if (beforeEach) {
-            testCompletePromise = executeTestsSerial(beforeEach);
+            self.emit('beforeEach', beforeEach);
+            testCompletePromise = self.executeTestsSerial(beforeEach).then(function () {
+                self.emit('beforeEach end', beforeEach);
+            });
         } else {
             testCompletePromise = Promise.resolve();
         }
 
+        test.title = test.title || (test.target.method + ' ' + test.target.url);
+
         testCompletePromise = testCompletePromise.then(function () {
-            return executeRequest(test);
+            //self.emit('pending', test);
+            return executeRequest(test).then(function () {
+                self.emit('pass', test);
+            }, function (err) {
+                self.emit('fail', test, err);
+                return Promise.reject(err);
+            }).finally(function() {
+                self.emit('test end', test);
+            });
         });
 
         if (afterEach) {
+            self.emit('afterEach', afterEach);
             testCompletePromise = testCompletePromise.then(function () {
-                return executeTestsSerial(afterEach);
+                return self.executeTestsSerial(afterEach).then(function () {
+                    self.emit('afterEach end', afterEach);
+                });
             });
         }
 
         return testCompletePromise;
-    }
+    };
 
     function executeRequest(test) {
         var options = {
@@ -179,5 +232,5 @@
         }
     }
 
-    module.exports = handleSuites;
-}(require('request-promise'), require('util'), require('assert'), require('joi'), require('bluebird')));
+    module.exports = SuiteRunner;
+}(require('request-promise'), require('util'), require('assert'), require('joi'), require('bluebird'), require('lodash.create'), require('events').EventEmitter));

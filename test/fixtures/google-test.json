@@ -1,0 +1,15 @@
+{
+  "suite": {
+    "tests": [
+      {
+        "target": {
+          "url": "https://www.google.com",
+          "method": "GET"
+        },
+        "expect": {
+          "statusCode": 200
+        }
+      }
+    ]
+  }
+}

@@ -6,7 +6,7 @@
                 .post('/')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -26,7 +26,7 @@
                 .post('/')
                 .reply(204);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -49,7 +49,7 @@
                 .post('/')
                 .reply(204);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -74,7 +74,7 @@
                 .post('/')
                 .reply(400);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -102,7 +102,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -125,7 +125,7 @@
                 .post('/')
                 .reply(200);
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -152,7 +152,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -179,7 +179,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -208,7 +208,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -238,7 +238,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -271,7 +271,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {
@@ -304,7 +304,7 @@
                     SomeHeader: 'Value'
                 });
 
-            return expect(Peg({
+            return expect(new Peg().run({
                 suite: {
                     tests: [
                         {

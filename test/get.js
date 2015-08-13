@@ -21,6 +21,56 @@
                 expect(endpoint.isDone()).to.be.ok();
             })).to.eventually.be.fulfilled();
         });
+        it('should persist cookies between requests', function () {
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, '', {
+                    'Set-Cookie': 'value=something'
+                });
+
+            var nockOptions = {
+                reqheaders: {
+                    'Cookie': 'value=something'
+                }
+            };
+            var cookieEndpoint = nock('https://example.com', nockOptions)
+                .get('/cookieMonster')
+                .reply(200);
+
+            return expect(new Peg().run({
+                options: {
+                    persistCookies: true
+                },
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200,
+                                headers: {
+                                    'Set-Cookie': 'value=something'
+                                }
+                            }
+                        },
+                        {
+                            target: {
+                                url: 'https://example.com/cookieMonster',
+                                method: 'GET'
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+                expect(cookieEndpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
         it('should make sure we get back the expected status code', function () {
             var endpoint = nock('https://example.com')
                 .get('/')

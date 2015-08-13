@@ -76,21 +76,20 @@
                 }
 
                 var validatedSuite = result.value.suite;
-                var suiteOptions = result.value.options;
+                self.suiteOptions = result.value.options || {};
 
                 // For now, don't want to add the ability to nest suites, as I feel that would encourage test suites to be larger than I prefer. I think they should be small and simple, but it would allow for over-nesting and large test suites instead of focusing on small bits of functionality.
-                return resolve(self.executeSuite(validatedSuite, suiteOptions));
+                return resolve(self.executeSuite(validatedSuite));
             });
         }).finally(function() {
             self.emit('end', suites);
         });
     };
 
-    SuiteRunner.prototype.executeSuite = function executeSuite(suite, options) {
+    SuiteRunner.prototype.executeSuite = function executeSuite(suite) {
         var self = this;
         suite.title = suite.title || 'Suite';
         self.emit('suite', suite);
-        options = options || {};
         var suiteCompletePromise;
         if (suite.before) {
             self.emit('before', suite.before);
@@ -102,7 +101,7 @@
         }
 
         suiteCompletePromise = suiteCompletePromise.then(function () {
-            if (options.runInParallel) {
+            if (self.suiteOptions.runInParallel) {
                 return self.executeTestsParallel(suite.tests, suite.beforeEach, suite.afterEach);
             }
             return self.executeTestsSerial(suite.tests, suite.beforeEach, suite.afterEach);
@@ -157,7 +156,7 @@
 
         testCompletePromise = testCompletePromise.then(function () {
             //self.emit('pending', test);
-            return executeRequest(test).then(function () {
+            return self.executeRequest(test).then(function () {
                 self.emit('pass', test);
             }, function (err) {
                 self.emit('fail', test, err);
@@ -179,7 +178,8 @@
         return testCompletePromise;
     };
 
-    function executeRequest(test) {
+    SuiteRunner.prototype.executeRequest = function executeRequest(test) {
+        var self = this;
         var options = {
             url: test.target.url,
             method: test.target.method,
@@ -188,7 +188,8 @@
             resolveWithFullResponse: true,
             body: test.target.body,
             json: typeof test.target.body === 'object',
-            simple: false
+            simple: false,
+            jar: self.suiteOptions.persistCookies
         };
         return request(options)
             .then(function (response) {
@@ -212,7 +213,7 @@
 
                 return Promise.resolve();
             });
-    }
+    };
 
     function validateTestValue(actual, expected, type) {
         if (typeof expected === 'string' || typeof expected === 'number') {

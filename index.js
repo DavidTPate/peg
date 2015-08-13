@@ -24,7 +24,7 @@
             }).required(),
             method: Joi.string().valid(methods).required(),
             headers: Joi.object().pattern(/.+/, Joi.string().required()).optional(),
-            body: Joi.alternatives().when('method', {is: ['POST', 'PUT', 'PATCH'], then: Joi.string().optional(), otherwise: Joi.forbidden()})
+            body: Joi.alternatives().when('method', {is: ['POST', 'PUT', 'PATCH'], then: Joi.alternatives().try(Joi.string().optional(), Joi.object().optional()), otherwise: Joi.forbidden()})
         }).unknown().required(),
         expect: Joi.object().keys({
             statusCode: Joi.alternatives().try(Joi.number().valid(statusCodes), regexValueSchema).optional(),
@@ -186,6 +186,8 @@
             headers: test.target.headers,
             gzip: true,
             resolveWithFullResponse: true,
+            body: test.target.body,
+            json: typeof test.target.body === 'object',
             simple: false
         };
         return request(options)

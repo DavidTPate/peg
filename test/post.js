@@ -21,6 +21,66 @@
                 expect(endpoint.isDone()).to.be.ok();
             })).to.eventually.be.fulfilled();
         });
+        it('should be able to post a JSON body', function () {
+            var endpoint = nock('https://example.com')
+                .post('/', {
+                    username: 'user',
+                    password: 'pass'
+                })
+                .reply(200);
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'POST',
+                                body: {
+                                    username: 'user',
+                                    password: 'pass'
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+        it('should be able to post a stringified body', function () {
+            var endpoint = nock('https://example.com')
+                .post('/', {
+                    username: 'user',
+                    password: 'pass'
+                })
+                .reply(200);
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    username: 'user',
+                                    password: 'pass'
+                                })
+                            },
+                            expect: {
+                                statusCode: 200
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
         it('should make sure we get back the expected status code', function () {
             var endpoint = nock('https://example.com')
                 .post('/')

@@ -27,7 +27,9 @@
                     username: 'user',
                     password: 'pass'
                 })
-                .reply(200);
+                .reply(200, {
+                    something: 'some value'
+                });
 
             return expect(new Peg().run({
                 suite: {
@@ -40,6 +42,12 @@
                                     username: 'user',
                                     password: 'pass'
                                 }
+                            },
+                            expect: {
+                                statusCode: 200,
+                                body: {
+                                    something: 'some value'
+                                }
                             }
                         }
                     ]
@@ -48,13 +56,50 @@
                 expect(endpoint.isDone()).to.be.ok();
             })).to.eventually.be.fulfilled();
         });
-        it('should be able to post a stringified body', function () {
+        it('should make sure the body matches our expectations', function () {
             var endpoint = nock('https://example.com')
                 .post('/', {
                     username: 'user',
                     password: 'pass'
                 })
-                .reply(200);
+                .reply(200, {
+                    something: 'some other value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'POST',
+                                body: {
+                                    username: 'user',
+                                    password: 'pass'
+                                }
+                            },
+                            expect: {
+                                statusCode: 200,
+                                body: {
+                                    something: 'some value'
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.rejectedWith(Error, 'Expected body \"{\"something\":\"some other value\"}\" to deep equal \"{\"something\":\"some value\"}\" but it did not');
+        });
+        it('should make sure the JSON body matches our expectations', function () {
+            var endpoint = nock('https://example.com')
+                .post('/', {
+                    username: 'user',
+                    password: 'pass'
+                })
+                .reply(200, {
+                    something: 'some other value'
+                });
 
             return expect(new Peg().run({
                 suite: {
@@ -72,7 +117,48 @@
                                 })
                             },
                             expect: {
-                                statusCode: 200
+                                statusCode: 200,
+                                body: JSON.stringify({
+                                    something: 'some value'
+                                })
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.rejectedWith(Error, 'Expected body to have value \"{\"something\":\"some value\"}\" but it had value \"{\"something\":\"some other value\"}\"');
+        });
+        it('should be able to post a stringified body', function () {
+            var endpoint = nock('https://example.com')
+                .post('/', {
+                    username: 'user',
+                    password: 'pass'
+                })
+                .reply(200, {
+                    something: 'some value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    username: 'user',
+                                    password: 'pass'
+                                })
+                            },
+                            expect: {
+                                statusCode: 200,
+                                body: JSON.stringify({
+                                    something: 'some value'
+                                })
                             }
                         }
                     ]

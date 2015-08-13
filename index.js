@@ -29,7 +29,7 @@
         expect: Joi.object().keys({
             statusCode: Joi.alternatives().try(Joi.number().valid(statusCodes), regexValueSchema).optional(),
             headers: Joi.object().pattern(/.+/, testValueSchema.required()).optional(),
-            body: testValueSchema.optional()
+            body: Joi.alternatives().try(testValueSchema.optional(), Joi.object().optional())
         }).unknown()
     }).unknown().required()).single(true);
 
@@ -218,19 +218,30 @@
         if (typeof expected === 'string' || typeof expected === 'number') {
             assert.strictEqual(actual, expected, util.format('Expected %s to have value "%s" but it had value "%s"', type, expected, actual))
         } else if (typeof expected === 'object') {
-            var flags = '';
-            expected.flags = expected.flags || {};
-            if (expected.flags.ignoreCase) {
-                flags += 'i';
+            // If we have a Regex provided, use that.
+            if (expected.expression) {
+                var flags = '';
+                expected.flags = expected.flags || {};
+                if (expected.flags.ignoreCase) {
+                    flags += 'i';
+                }
+                if (expected.flags.global) {
+                    flags += 'g';
+                }
+                if (expected.flags.multiline) {
+                    flags += 'm';
+                }
+                var regex = new RegExp(expected.expression, flags);
+                assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
+            } else {
+                // Otherwise we have a JSON object, let's compare those.
+                if (typeof actual ==='string') {
+                    // If we got a String back, let's make it JSON.
+                    actual = JSON.parse(actual);
+                }
+
+                assert.deepEqual(actual, expected, util.format('Expected %s "%s" to deep equal "%s" but it did not', type, JSON.stringify(actual), JSON.stringify(expected)));
             }
-            if (expected.flags.global) {
-                flags += 'g';
-            }
-            if (expected.flags.multiline) {
-                flags += 'm';
-            }
-            var regex = new RegExp(expected.expression, flags);
-            assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
         }
     }
 

@@ -347,6 +347,185 @@
             })).to.eventually.be.fulfilled();
         });
 
+        it('should match the body with our function', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody(body) {
+                                    expect(body).to.equal(responseBody);
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should match the body with our function when resolving a promise', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody(body) {
+                                    expect(body).to.equal(responseBody);
+                                    return Promise.resolve();
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should match the body with our function when returning true', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody(body) {
+                                    return true;
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.fulfilled();
+        });
+
+        it('should make sure the body satisfies our function when returning false', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody() {
+                                    return false;
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.rejectedWith(Error, 'Error: Expected body \"\"This is a multi-line body \\n which has words and values multiple times 42 1337\"\" to satisfy function \"checkBody\" but it did not');
+        });
+
+        it('should make sure the body satisfies our function when throwing an error', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody(body) {
+                                    expect(body).to.equal(responseBody + 'let\'s break this');
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.rejectedWith(Error, 'expected \'This is a multi-line body \\n which has words and values multiple times 42 1337\' to equal \'This is a multi-line body \\n which has words and values multiple times 42 1337let\\\'s break this\'');
+        });
+
+        it('should make sure the body satisfies our function when rejecting a promise', function () {
+            var responseBody = 'This is a multi-line body \n which has words and values multiple times 42 1337';
+            var endpoint = nock('https://example.com')
+                .get('/')
+                .reply(200, responseBody, {
+                    SomeHeader: 'Value'
+                });
+
+            return expect(new Peg().run({
+                suite: {
+                    tests: [
+                        {
+                            target: {
+                                url: 'https://example.com',
+                                method: 'GET'
+                            },
+                            expect: {
+                                body: function checkBody(body) {
+                                    try {
+                                        expect(body).to.equal(responseBody + 'let\'s break this');
+                                    } catch(err) {
+                                        return Promise.reject(err);
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }).then(function () {
+                expect(endpoint.isDone()).to.be.ok();
+            })).to.eventually.be.rejectedWith(Error, 'expected \'This is a multi-line body \\n which has words and values multiple times 42 1337\' to equal \'This is a multi-line body \\n which has words and values multiple times 42 1337let\\\'s break this\'');
+        });
+
         it('should make sure the body matches our regex with all the flags', function () {
             var endpoint = nock('https://example.com')
                 .get('/')

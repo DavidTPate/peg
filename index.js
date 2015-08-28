@@ -29,7 +29,7 @@
         expect: Joi.object().keys({
             statusCode: Joi.alternatives().try(Joi.number().valid(statusCodes), regexValueSchema).optional(),
             headers: Joi.object().pattern(/.+/, testValueSchema.required()).optional(),
-            body: Joi.alternatives().try(testValueSchema.optional(), Joi.object().optional())
+            body: Joi.alternatives().try(testValueSchema.optional(), Joi.object().optional(), Joi.func().optional())
         }).unknown()
     }).unknown().required()).single(true);
 
@@ -81,7 +81,7 @@
                 // For now, don't want to add the ability to nest suites, as I feel that would encourage test suites to be larger than I prefer. I think they should be small and simple, but it would allow for over-nesting and large test suites instead of focusing on small bits of functionality.
                 return resolve(self.executeSuite(validatedSuite));
             });
-        }).finally(function() {
+        }).finally(function () {
             self.emit('end', suites);
         });
     };
@@ -161,7 +161,7 @@
             }, function (err) {
                 self.emit('fail', test, err);
                 return Promise.reject(err);
-            }).finally(function() {
+            }).finally(function () {
                 self.emit('test end', test);
             });
         });
@@ -193,57 +193,104 @@
         };
         return request(options)
             .then(function (response) {
+                var resultPromise = Promise.resolve();
                 if (test.expect) {
                     if (test.expect.statusCode) {
-                        validateTestValue(response.statusCode, test.expect.statusCode, 'statusCode');
+                        resultPromise = resultPromise.then(function () {
+                            return validateTestValue(response.statusCode, test.expect.statusCode, 'statusCode');
+                        });
                     }
 
                     if (test.expect.headers) {
                         Object.keys(test.expect.headers).forEach(function (header) {
-                            var lcaseHeader = header.toLowerCase();
-                            assert.ok(response.headers[lcaseHeader], util.format('Expected header "%s" to have value "%s" but it wasn\'t present', header, test.expect.headers[header]));
-                            validateTestValue(response.headers[lcaseHeader], test.expect.headers[header], util.format('header "%s"', header));
+                            resultPromise = resultPromise.then(function () {
+                                var lcaseHeader = header.toLowerCase();
+                                assert.ok(response.headers[lcaseHeader], util.format('Expected header "%s" to have value "%s" but it wasn\'t present', header, test.expect.headers[header]));
+                                return validateTestValue(response.headers[lcaseHeader], test.expect.headers[header], util.format('header "%s"', header));
+                            });
                         });
                     }
 
                     if (test.expect.body) {
-                        validateTestValue(response.body, test.expect.body, 'body');
+                        resultPromise = resultPromise.then(function () {
+                            return validateTestValue(response.body, test.expect.body, 'body');
+                        });
+                    }
+                }
+
+                return resultPromise;
+            });
+    };
+
+    function validateTestValue(actual, expected, type) {
+        return new Promise(function (resolve) {
+            if (typeof expected === 'function') {
+                return resolve(validateValueWithFunction(actual, expected, type));
+            } else if (typeof expected === 'string' || typeof expected === 'number') {
+                return resolve(validateValueAsEquivalent(actual, expected, type));
+            } else if (typeof expected === 'object') {
+                // If we have a Regex provided, use that.
+                if (expected.expression) {
+                    return resolve(validateValueWithRegExp(actual, expected, type));
+                } else {
+                    // Otherwise we have a JSON object, let's compare those.
+                    return resolve(validateValueAsObject(actual, expected, type));
+                }
+            }
+            resolve();
+        });
+    }
+
+    function validateValueWithFunction(actual, expected, type) {
+        return new Promise(function (resolve) {
+            return resolve(expected(actual));
+        }).then(function (result) {
+                if (typeof result === 'boolean') {
+                    if (!result) {
+                        return Promise.reject(new Error(util.format('Expected %s "%s" to satisfy function "%s" but it did not', type, JSON.stringify(actual), expected.name || 'anonymous')));
                     }
                 }
 
                 return Promise.resolve();
             });
-    };
+    }
 
-    function validateTestValue(actual, expected, type) {
-        if (typeof expected === 'string' || typeof expected === 'number') {
-            assert.strictEqual(actual, expected, util.format('Expected %s to have value "%s" but it had value "%s"', type, expected, actual))
-        } else if (typeof expected === 'object') {
-            // If we have a Regex provided, use that.
-            if (expected.expression) {
-                var flags = '';
-                expected.flags = expected.flags || {};
-                if (expected.flags.ignoreCase) {
-                    flags += 'i';
-                }
-                if (expected.flags.global) {
-                    flags += 'g';
-                }
-                if (expected.flags.multiline) {
-                    flags += 'm';
-                }
-                var regex = new RegExp(expected.expression, flags);
-                assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
-            } else {
-                // Otherwise we have a JSON object, let's compare those.
-                if (typeof actual ==='string') {
-                    // If we got a String back, let's make it JSON.
-                    actual = JSON.parse(actual);
-                }
-
-                assert.deepEqual(actual, expected, util.format('Expected %s "%s" to deep equal "%s" but it did not', type, JSON.stringify(actual), JSON.stringify(expected)));
+    function validateValueAsObject(actual, expected, type) {
+        return new Promise(function (resolve) {
+            if (typeof actual === 'string') {
+                // If we got a String back, let's make it JSON.
+                actual = JSON.parse(actual);
             }
-        }
+
+            assert.deepEqual(actual, expected, util.format('Expected %s "%s" to deep equal "%s" but it did not', type, JSON.stringify(actual), JSON.stringify(expected)));
+            resolve();
+        });
+    }
+
+    function validateValueAsEquivalent(actual, expected, type) {
+        return new Promise(function (resolve) {
+            assert.strictEqual(actual, expected, util.format('Expected %s to have value "%s" but it had value "%s"', type, expected, actual));
+            resolve();
+        });
+    }
+
+    function validateValueWithRegExp(actual, expected, type) {
+        return new Promise(function (resolve) {
+            var flags = '';
+            expected.flags = expected.flags || {};
+            if (expected.flags.ignoreCase) {
+                flags += 'i';
+            }
+            if (expected.flags.global) {
+                flags += 'g';
+            }
+            if (expected.flags.multiline) {
+                flags += 'm';
+            }
+            var regex = new RegExp(expected.expression, flags);
+            assert.ok(regex.test(actual), util.format('Expected %s to match "%s" with flags "%s" but "%s" did not match', type, regex.source, flags, actual));
+            resolve();
+        });
     }
 
     module.exports = SuiteRunner;

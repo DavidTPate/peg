@@ -20,22 +20,22 @@
   },
   "homepage": "https://github.com/DavidTPate/peg#readme",
   "dependencies": {
-    "bluebird": "^2.x",
+    "bluebird": "^3.5.0",
     "commander": "^2.x",
     "exit": "^0.x",
-    "joi": "^6.x",
-    "lodash.create": "^3.x",
-    "request-promise": "^0.x",
+    "joi": "^10.4.1",
+    "lodash.create": "^4.2.0",
+    "request-promise": "^4.2.0",
     "supports-color": "^3.x",
     "tough-cookie": "^2.x"
   },
   "devDependencies": {
     "chai": "^3.x",
-    "chai-as-promised": "^5.x",
+    "chai-as-promised": "^6.0.0",
     "dirty-chai": "^1.x",
     "istanbul": "^0.x",
-    "mocha": "^2.x",
-    "nock": "^2.x"
+    "mocha": "^3.3.0",
+    "nock": "^9.0.13"
   },
   "scripts": {
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- --check-leaks test/"

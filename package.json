@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "chai": "^3.x",
-    "chai-as-promised": "^6.0.0",
+    "chai-as-promised": "^7.0.0",
     "dirty-chai": "^1.x",
     "istanbul": "^0.x",
     "mocha": "^3.3.0",

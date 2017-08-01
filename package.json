@@ -34,7 +34,7 @@
     "chai-as-promised": "^6.0.0",
     "dirty-chai": "^1.x",
     "istanbul": "^0.x",
-    "mocha": "^3.3.0",
+    "mocha": "^3.5.0",
     "nock": "^9.0.13"
   },
   "scripts": {

@@ -30,7 +30,7 @@
     "tough-cookie": "^2.x"
   },
   "devDependencies": {
-    "chai": "^3.x",
+    "chai": "^4.1.2",
     "chai-as-promised": "^6.0.0",
     "dirty-chai": "^1.x",
     "istanbul": "^0.x",

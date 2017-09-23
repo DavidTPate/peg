@@ -35,7 +35,7 @@
     "dirty-chai": "^1.x",
     "istanbul": "^0.x",
     "mocha": "^3.3.0",
-    "nock": "^9.0.13"
+    "nock": "^9.0.19"
   },
   "scripts": {
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- --check-leaks test/"

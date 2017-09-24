@@ -23,7 +23,7 @@
     "bluebird": "^3.5.0",
     "commander": "^2.x",
     "exit": "^0.x",
-    "joi": "^10.4.1",
+    "joi": "^11.1.0",
     "lodash.create": "^4.2.0",
     "request-promise": "^4.2.0",
     "supports-color": "^3.x",

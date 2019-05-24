@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/DavidTPate/peg#readme",
   "dependencies": {
-    "bluebird": "^3.5.0",
+    "bluebird": "^3.5.5",
     "commander": "^2.x",
     "exit": "^0.x",
     "joi": "^10.4.1",

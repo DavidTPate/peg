@@ -21,7 +21,7 @@
   "homepage": "https://github.com/DavidTPate/peg#readme",
   "dependencies": {
     "bluebird": "^3.5.0",
-    "commander": "^2.x",
+    "commander": "^3.0.2",
     "exit": "^0.x",
     "joi": "^10.4.1",
     "lodash.create": "^4.2.0",
